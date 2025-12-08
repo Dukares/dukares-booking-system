@@ -1,0 +1,95 @@
+@extends('layouts.dukares-layout')
+
+@section('content')
+
+<div class="p-6">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Dashboard DukaRes</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        <div class="bg-white p-5 shadow rounded-lg">
+            <p class="text-sm text-gray-500">Totale Strutture</p>
+            <p class="text-3xl font-bold text-blue-600">{{ $totProperties }}</p>
+        </div>
+
+        <div class="bg-white p-5 shadow rounded-lg">
+            <p class="text-sm text-gray-500">Totale Proprietari</p>
+            <p class="text-3xl font-bold text-blue-600">{{ $totOwners }}</p>
+        </div>
+
+        <div class="bg-white p-5 shadow rounded-lg">
+            <p class="text-sm text-gray-500">Prenotazioni Questo Mese</p>
+            <p class="text-3xl font-bold text-blue-600">{{ $totBookingsMonth }}</p>
+        </div>
+
+        <div class="bg-white p-5 shadow rounded-lg">
+            <p class="text-sm text-gray-500">Commissioni Totali (€)</p>
+            <p class="text-3xl font-bold text-blue-600">{{ number_format($totCommissioni, 2, ',', '.') }}</p>
+        </div>
+    </div>
+
+    <div class="bg-white shadow rounded-lg p-6 mb-10">
+        <h2 class="text-xl font-bold mb-4">Ultime Prenotazioni</h2>
+
+        <table class="w-full table-auto">
+            <thead>
+                <tr class="border-b">
+                    <th class="text-left py-2">Struttura</th>
+                    <th class="text-left py-2">Check-in</th>
+                    <th class="text-left py-2">Check-out</th>
+                    <th class="text-left py-2">Totale</th>
+                    <th class="text-left py-2">Stato</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($recentBookings as $res)
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="py-2">{{ $res->property->nome ?? '—' }}</td>
+                    <td class="py-2">{{ $res->checkin }}</td>
+                    <td class="py-2">{{ $res->checkout }}</td>
+                    <td class="py-2">€ {{ number_format($res->totale, 2, ',', '.') }}</td>
+                    <td class="py-2">
+                        <span class="px-2 py-1 rounded text-white 
+                            @if($res->stato == 'confermato') bg-green-600
+                            @elseif($res->stato == 'annullato') bg-red-600
+                            @else bg-gray-600 @endif">
+                            {{ ucfirst($res->stato) }}
+                        </span>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-xl font-bold mb-4">Prenotazioni per Mese</h2>
+        <canvas id="chartPrenotazioni"></canvas>
+    </div>
+
+</div>
+
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const ctx = document.getElementById('chartPrenotazioni');
+
+    const mesi = @json($bookingsByMonth->pluck('mese'));
+    const valori = @json($bookingsByMonth->pluck('tot'));
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: mesi,
+            datasets: [{
+                label: 'Prenotazioni',
+                data: valori,
+                borderWidth: 1
+            }]
+        },
+    });
+</script>
+@endsection
+

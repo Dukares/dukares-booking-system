@@ -53,10 +53,9 @@
     @endif
 
 
-    <!-- BANNER OFFLINE (NUOVO) -->
+    <!-- BANNER OFFLINE -->
     <div id="offline-banner" style="display:none;" class="bg-red-600 text-white p-3 text-center">
-        ⚠️ Modalità Offline di Emergenza: puoi solo consultare i dati.
-        Le modifiche sono disabilitate finché non torna la connessione.
+        ⚠️ Modalità Offline di Emergenza: consultazione sola lettura.
     </div>
 
 
@@ -71,11 +70,33 @@
 
             <nav class="p-4">
                 <ul class="space-y-2 text-gray-700">
+
                     <li><a href="/dashboard" class="block p-2 hover:bg-blue-100 rounded">🏠 Dashboard</a></li>
+
                     <li><a href="/properties" class="block p-2 hover:bg-blue-100 rounded">🏡 Strutture</a></li>
+
                     <li><a href="/owners" class="block p-2 hover:bg-blue-100 rounded">👤 Proprietari</a></li>
+
                     <li><a href="/reservations" class="block p-2 hover:bg-blue-100 rounded">📅 Prenotazioni</a></li>
+
                     <li><a href="/security" class="block p-2 hover:bg-blue-100 rounded">🔐 Security Center</a></li>
+
+                    <!-- 🔵 MENU AGGIUNTO: Channel Manager Host -->
+                    <li>
+                        <a href="{{ route('host.channels.index') }}"
+                           class="block p-2 hover:bg-blue-100 rounded">
+                            🌐 Channel Manager
+                        </a>
+                    </li>
+
+                    <!-- 🟣 MENU AGGIUNTO: Canali (Admin) -->
+                    <li>
+                        <a href="{{ route('channels.index') }}"
+                           class="block p-2 hover:bg-blue-100 rounded">
+                            ⚙️ Canali (Admin)
+                        </a>
+                    </li>
+
                 </ul>
             </nav>
 
@@ -86,13 +107,12 @@
 
             <!-- NAVBAR -->
             <header class="bg-white shadow p-4 flex justify-between items-center">
-
                 <h2 class="text-xl font-semibold">Pannello di Controllo</h2>
 
                 <div class="flex items-center space-x-4">
                     <span class="text-gray-600">Ciao, {{ Auth::user()->name ?? 'Utente' }}</span>
 
-                    <!-- LOGOUT FUNZIONANTE -->
+                    <!-- LOGOUT -->
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button 
@@ -103,7 +123,6 @@
                         </button>
                     </form>
                 </div>
-
             </header>
 
             <!-- CONTENUTO DELLE PAGINE -->
@@ -119,10 +138,8 @@
     @yield('scripts')
 
 
-    <!-- SCRIPT MODALITÀ OFFLINE DUKARES -->
+    <!-- SCRIPT OFFLINE -->
     <script>
-    // ---- DukaRes Offline Emergency Mode ----
-
     function saveEmergencyCache() {
         const calendarData = document.getElementById('pms-calendar-data');
         const reservationData = document.getElementById('pms-reservation-data');
@@ -145,19 +162,18 @@
     }
 
     function activateOfflineMode() {
-        const offlineBanner = document.getElementById('offline-banner');
+        document.getElementById('offline-banner').style.display = 'block';
+
         const onlineContent = document.getElementById('online-content');
         const offlineCalendar = document.getElementById('offline-calendar');
-
-        offlineBanner.style.display = 'block';
 
         if (onlineContent) onlineContent.style.display = 'none';
 
         const cachedCalendar = localStorage.getItem('dukares_calendar_cache');
-        if (cachedCalendar) {
-            offlineCalendar.innerHTML = cachedCalendar;
-        } else {
-            offlineCalendar.innerHTML = "<p class='text-gray-600'>Nessun dato salvato. Connettiti almeno una volta.</p>";
+        if (offlineCalendar) {
+            offlineCalendar.innerHTML = cachedCalendar
+                ? cachedCalendar
+                : "<p class='text-gray-600'>Nessun dato salvato.</p>";
         }
     }
 

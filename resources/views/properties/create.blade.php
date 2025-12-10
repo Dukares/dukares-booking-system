@@ -60,6 +60,14 @@
                       class="w-full border rounded p-2"></textarea>
         </div>
 
+        {{-- ⭐ ICS URL (Airbnb / Booking.com) --}}
+        <div class="mb-6">
+            <label class="block font-semibold mb-1">ICS URL (Airbnb / Booking.com)</label>
+            <input type="text" name="ics_url" value="{{ old('ics_url') }}"
+                   class="w-full border rounded p-2"
+                   placeholder="https://www.airbnb.com/calendar/ical/123456789.ics">
+        </div>
+
         {{-- BOTTONI --}}
         <div class="flex justify-between items-center mt-6">
             <a href="{{ route('properties.index') }}" 
@@ -77,4 +85,3 @@
 </div>
 
 @endsection
-

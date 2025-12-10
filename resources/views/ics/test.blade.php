@@ -12,33 +12,37 @@
     </div>
 @endif
 
-<form method="POST" enctype="multipart/form-data" 
-      action="{{ route('ics.test.run') }}"
-      class="bg-white shadow p-6 rounded-lg max-w-xl">
+@if(session('error'))
+    <div class="mb-4 p-3 bg-red-100 rounded text-red-800">
+        {{ session('error') }}
+    </div>
+@endif
+
+<form method="POST" action="{{ route('ics.test.run') }}" enctype="multipart/form-data"
+      style="background: white; padding: 24px; border-radius: 12px; max-width: 600px;">
 
     @csrf
 
-    <div class="mb-4">
-        <label class="font-semibold">ID Struttura *</label>
-        <input type="number" name="property_id" 
-               required
-               class="w-full border rounded p-2"
-               placeholder="Es: 1">
+    <div style="margin-bottom: 16px;">
+        <label style="font-weight: bold;">ID Struttura *</label>
+        <input type="number" name="property_id"
+               required placeholder="Es: 1"
+               style="border: 1px solid #ccc; padding: 8px; border-radius: 6px; width: 100%;">
     </div>
 
-    <div class="mb-6">
-        <label class="font-semibold">Carica file ICS *</label>
-        <input type="file" name="ics_file" 
-               accept=".ics"
+    <div style="margin-bottom: 16px;">
+        <label style="font-weight: bold;">Carica file ICS *</label>
+        <input type="file" name="ics_file" accept=".ics"
                required
-               class="w-full border rounded p-2">
+               style="border: 1px solid #ccc; padding: 8px; border-radius: 6px; width: 100%;">
     </div>
 
-    <button 
-        type="submit"
-        class="px-4 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700">
-        Importa ICS
-    </button>
+    <div style="margin-top: 24px;">
+        <button type="submit"
+                style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer;">
+            🚀 Importa ICS
+        </button>
+    </div>
 
 </form>
 

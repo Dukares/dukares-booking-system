@@ -9,31 +9,28 @@ use App\Http\Controllers\PropertyController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\SecurityController;
 
-/*
-|--------------------------------------------------------------------------
-| WEB ROUTES - DukaRes
-|--------------------------------------------------------------------------
-*/
+use App\Http\Controllers\ChannelController;
+use App\Http\Controllers\HostChannelController;
+use App\Http\Controllers\ICSController;
+use App\Http\Controllers\ICSExportController;
 
-/* HOME → redirect login */
+// -----------------------------------------
+// ⭐ Rotta ICS PUBBLICA (senza login) — EXPORT ICS
+// -----------------------------------------
+Route::get('/ics/property/{id}.ics', 
+    [ICSExportController::class, 'export']
+)->name('ics.export');
+// -----------------------------------------
+
+
 Route::get('/', function () {
     return redirect('/login');
 });
 
-/*
-|--------------------------------------------------------------------------
-| LOGIN
-|--------------------------------------------------------------------------
-*/
 Route::get('/login', function () {
     return view('auth.login');
 })->middleware('guest')->name('login');
 
-/*
-|--------------------------------------------------------------------------
-| LOGOUT (funzionante senza errore 419)
-|--------------------------------------------------------------------------
-*/
 Route::post('/logout', function () {
     Auth::logout();
     session()->invalidate();
@@ -41,42 +38,91 @@ Route::post('/logout', function () {
     return redirect('/login');
 })->name('logout');
 
-/*
-|--------------------------------------------------------------------------
-| AREA PROTETTA (serve autenticazione)
-|--------------------------------------------------------------------------
-*/
+
 Route::middleware(['auth'])->group(function () {
 
-    /* Dashboard */
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 
-    /* Proprietari */
+    // -----------------------------------------
+    // PROPRIETARI
+    // -----------------------------------------
     Route::resource('/owners', OwnerController::class);
 
-    /* Strutture */
+    // -----------------------------------------
+    // STRUTTURE
+    // -----------------------------------------
     Route::resource('/properties', PropertyController::class);
 
-    /* ⭐ PMS Calendar per una singola struttura */
-    Route::get('/properties/{property}/calendar', 
+    Route::get('/properties/{property}/calendar',
         [PropertyController::class, 'calendar']
     )->name('properties.calendar');
 
-    /* ⭐ Singolo giorno calendario */
-    Route::post('/calendar/update-day', 
+    Route::post('/calendar/update-day',
         [PropertyController::class, 'updateDay']
     )->name('calendar.updateDay');
 
-    /* ⭐⭐ Range selection calendario (NUOVO) */
-    Route::post('/calendar/update-range', 
+    Route::post('/calendar/update-range',
         [PropertyController::class, 'updateRange']
     )->name('calendar.updateRange');
 
-    /* Prenotazioni */
+    // -----------------------------------------
+    // ⭐ CALENDARIO AJAX — DISPONIBILITÀ LIVE
+    // -----------------------------------------
+    Route::get('/calendar/month/{property}', 
+        [PropertyController::class, 'loadMonth']
+    )->name('calendar.loadMonth');
+
+
+    // -----------------------------------------
+    // ⭐ CHANNEL MANAGER — PAGINA PER STRUTTURA
+    // -----------------------------------------
+    Route::get('/properties/{property}/channel-manager',
+        [PropertyController::class, 'channelManager']
+    )->name('properties.channelManager');
+
+    // -----------------------------------------
+    // ⭐ CHANNEL MANAGER — SYNC NOW (import ICS live)
+    // -----------------------------------------
+    Route::post('/properties/{property}/sync-now',
+        [PropertyController::class, 'syncNow']
+    )->name('properties.syncNow');
+
+
+    // -----------------------------------------
+    // PRENOTAZIONI
+    // -----------------------------------------
     Route::resource('/reservations', ReservationController::class);
 
-    /* Security Center */
+    // -----------------------------------------
+    // SICUREZZA
+    // -----------------------------------------
     Route::get('/security', [SecurityController::class, 'index'])
         ->name('security');
+
+    // -----------------------------------------
+    // CHANNELS (admin)
+    // -----------------------------------------
+    Route::resource('/channels', ChannelController::class)
+        ->except(['show']);
+
+    // -----------------------------------------
+    // CHANNELS (host)
+    // -----------------------------------------
+    Route::get('/host/channels',
+        [HostChannelController::class, 'index']
+    )->name('host.channels.index');
+
+    Route::post('/host/channels',
+        [HostChannelController::class, 'storeOrUpdate']
+    )->name('host.channels.store');
+
+
+    // -----------------------------------------
+    // ⭐ ICS TEST MANUALE
+    // -----------------------------------------
+    Route::get('/ics-test', [ICSController::class, 'testForm'])->name('ics.test');
+    Route::post('/ics-test', [ICSController::class, 'runTest'])->name('ics.test.run');
+
 });
+

@@ -12,7 +12,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // CRON ICS automatico ogni 15 minuti
+        $schedule->command('dukares:import-ics')->everyFifteenMinutes();
     }
 
     /**

@@ -15,11 +15,9 @@ class Kernel extends ConsoleKernel
         // Esempio standard Laravel:
         // $schedule->command('inspire')->hourly();
 
-        // ⭐ CRON ICS AUTOMATICO DUKARES
-        // Ogni 10 minuti importa gli ICS di tutte le strutture che hanno ics_url
-        $schedule->command('dukares:import-ics')->everyTenMinutes();
-        // Se vuoi ogni 5 minuti: ->everyFiveMinutes();
-        // Se vuoi ogni ora:      ->hourly();
+        // ⭐ TEST ICS: esegui ogni minuto
+        $schedule->command('dukares:import-ics')->everyMinute();
+        // Quando funziona, cambialo in ->everyTenMinutes();
     }
 
     /**

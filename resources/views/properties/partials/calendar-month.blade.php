@@ -11,7 +11,7 @@ $monthName = ucfirst($firstDay->locale('it')->translatedFormat('F Y'));
 $startWeekDay = $firstDay->dayOfWeekIso;
 @endphp
 
-{{-- Navigazione mesi --}}
+{{-- 🔵 NAVIGAZIONE MESE --}}
 <div class="flex justify-between items-center mb-4">
     <button onclick="loadCalendar({{ $month - 1 }}, {{ $year }})"
             class="px-3 py-1 bg-gray-200 rounded shadow">
@@ -26,7 +26,7 @@ $startWeekDay = $firstDay->dayOfWeekIso;
     </button>
 </div>
 
-{{-- Giorni della settimana --}}
+{{-- 🔵 GIORNI DELLA SETTIMANA --}}
 <div class="grid grid-cols-7 gap-2 text-center font-semibold">
     <div>Lun</div>
     <div>Mar</div>
@@ -37,8 +37,10 @@ $startWeekDay = $firstDay->dayOfWeekIso;
     <div>Dom</div>
 </div>
 
-{{-- Spazi vuoti fino al primo giorno --}}
+{{-- 🔵 CALENDARIO --}}
 <div class="grid grid-cols-7 gap-2 mt-2 text-center">
+
+    {{-- Spazi vuoti prima del 1° giorno --}}
     @for ($i = 1; $i < $startWeekDay; $i++)
         <div></div>
     @endfor
@@ -51,18 +53,63 @@ $startWeekDay = $firstDay->dayOfWeekIso;
 
             if ($info?->reservation_id) {
                 $color = "bg-red-500 text-white";
-                $label = "Occupato";
             } elseif ($info?->is_blocked) {
                 $color = "bg-yellow-300";
-                $label = "Bloccato";
             } else {
                 $color = "bg-green-300";
-                $label = "Libero";
             }
         @endphp
 
-        <div class="p-2 rounded shadow text-sm {{ $color }}">
+        <div class="p-2 rounded shadow text-sm cursor-pointer day-cell {{ $color }}"
+            data-date="{{ $date }}"
+            data-property="{{ $property->id }}"
+            onclick="toggleDay(this)">
+            
             <div class="font-bold">{{ $d }}</div>
         </div>
     @endfor
 </div>
+
+{{-- 🔵 JAVASCRIPT PER CLICK GIORNO --}}
+<script>
+function toggleDay(element) {
+    const date = element.dataset.date;
+    const propertyId = element.dataset.property;
+
+    fetch("/calendar/update-day", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": "{{ csrf_token() }}"
+        },
+        body: JSON.stringify({
+            property_id: propertyId,
+            date: date
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        // BLOCCHI OCCUPATI
+        if (data.status === "occupied") {
+            alert("❌ Il giorno è occupato da una prenotazione.");
+            return;
+        }
+
+        // BLOCCA → GIALLO
+        if (data.status === "blocked") {
+            element.classList.remove("bg-green-300");
+            element.classList.add("bg-yellow-300");
+        } 
+
+        // SBLOCCA → VERDE
+        else if (data.status === "free") {
+            element.classList.remove("bg-yellow-300");
+            element.classList.add("bg-green-300");
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Errore durante l'aggiornamento del calendario.");
+    });
+}
+</script>

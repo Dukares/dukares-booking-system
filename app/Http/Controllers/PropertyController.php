@@ -187,7 +187,7 @@ class PropertyController extends Controller
         $month = intval($request->query('month'));
         $year  = intval($request->query('year'));
 
-        // Se il mese va fuori range, aggiustiamo
+        // ⭐ Aggiustamento mese fuori range
         if ($month < 1) {
             $month = 12;
             $year--;
@@ -198,7 +198,7 @@ class PropertyController extends Controller
             $year++;
         }
 
-        // Recupera tutti i giorni del mese
+        // ⭐ Recupera tutti i giorni del mese per quella struttura
         $days = $property->calendarDays()
             ->whereYear('date', $year)
             ->whereMonth('date', $month)

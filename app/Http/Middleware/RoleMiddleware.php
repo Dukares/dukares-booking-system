@@ -9,25 +9,24 @@ use Symfony\Component\HttpFoundation\Response;
 class RoleMiddleware
 {
     /**
-     * Gestisce l'autorizzazione basata sui ruoli.
-     * Esempio uso: ->middleware('role:admin')
-     *              ->middleware('role:admin,host')
+     * Gestisce l’accesso in base al ruolo utente.
+     *
+     * Uso:
+     * middleware('role:admin')
+     * middleware('role:owner,host')
      */
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        $user = $request->user();
+        $user = auth()->user();
 
-        if (!$user) {
-            abort(403, 'Non autenticato.');
+        if (! $user) {
+            abort(401, 'Non autenticato');
         }
 
-        // Se il ruolo dell'utente è uno di quelli richiesti → OK
-        if (in_array($user->role, $roles)) {
-            return $next($request);
+        if (! in_array($user->role, $roles, true)) {
+            abort(403, 'Accesso non autorizzato');
         }
 
-        // Altrimenti blocchiamo l'accesso
-        abort(403, 'Accesso negato. Ruolo non autorizzato.');
+        return $next($request);
     }
 }
-

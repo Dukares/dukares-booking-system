@@ -2,112 +2,78 @@
 
 namespace App\Services;
 
+use App\Models\CalendarDay;
+use App\Models\Property;
 use Carbon\Carbon;
-use App\Models\Reservation;
 
 class ICSImportService
 {
     /**
-     * Importa un file ICS per una struttura
+     * Importa un file ICS e blocca i giorni nel calendario
      *
-     * @param  int    $propertyId
-     * @param  string $icsContent
-     * @return array  [
-     *     'imported'   => X,
-     *     'duplicates' => Y,
-     *     'total'      => Z,
-     * ]
+     * @return int Numero di giorni importati
      */
-    public function importICS($propertyId, $icsContent)
+    public function import(Property $property, string $icsUrl): int
     {
-        $events = $this->parseICS($icsContent);
+        $content = @file_get_contents($icsUrl);
 
-        $imported   = 0;
-        $duplicates = 0;
-        $total      = 0;
-
-        foreach ($events as $e) {
-
-            if (!isset($e['DTSTART']) || !isset($e['DTEND'])) {
-                continue;
-            }
-
-            // Normalizziamo le date (solo giorno)
-            $checkin  = Carbon::parse($e['DTSTART'])->toDateString();
-            $checkout = Carbon::parse($e['DTEND'])->toDateString();
-
-            $nomeOspite = $e['SUMMARY'] ?? 'Import ICS';
-            $note       = $e['DESCRIPTION'] ?? null;
-
-            // Chiave univoca per evitare duplicati
-            $hashSource = [
-                'property_id' => $propertyId,
-                'checkin'     => $checkin,
-                'checkout'    => $checkout,
-                'nome_ospite' => $nomeOspite,
-                'note'        => $note,
-            ];
-
-            $uniqueHash = md5(json_encode($hashSource));
-
-            // Se esiste già una prenotazione con lo stesso hash → duplicato
-            $exists = Reservation::where('unique_hash', $uniqueHash)->exists();
-
-            if ($exists) {
-                $duplicates++;
-                $total++;
-                continue;
-            }
-
-            // Crea la prenotazione
-            Reservation::create([
-                'property_id'  => $propertyId,
-                'checkin'      => $checkin,
-                'checkout'     => $checkout,
-                'nome_ospite'  => $nomeOspite,
-                'note'         => $note,
-                'channel'      => 'ICS',
-                'unique_hash'  => $uniqueHash,
-            ]);
-
-            $imported++;
-            $total++;
+        if (! $content) {
+            return 0;
         }
 
-        return [
-            'imported'   => $imported,
-            'duplicates' => $duplicates,
-            'total'      => $total,
-        ];
-    }
-
-    /**
-     * Parser molto semplice del file ICS
-     *
-     * @param  string $ics
-     * @return array
-     */
-    private function parseICS($ics)
-    {
-        $lines   = preg_split("/\r\n|\n|\r/", $ics);
-        $events  = [];
-        $current = [];
+        $lines = preg_split("/\r\n|\n|\r/", $content);
+        $dates = [];
 
         foreach ($lines as $line) {
             $line = trim($line);
 
-            if ($line === 'BEGIN:VEVENT') {
-                $current = [];
+            if (str_starts_with($line, 'DTSTART')) {
+                $dates[] = $this->parseDate($line);
             }
-            elseif ($line === 'END:VEVENT') {
-                $events[] = $current;
-            }
-            elseif (strpos($line, ':') !== false) {
-                list($key, $value) = explode(':', $line, 2);
-                $current[$key] = $value;
+
+            if (str_starts_with($line, 'DTEND')) {
+                // DTEND non include l’ultimo giorno → -1
+                $dates[] = $this->parseDate($line)->subDay();
             }
         }
 
-        return $events;
+        $imported = 0;
+
+        for ($i = 0; $i < count($dates); $i += 2) {
+            if (! isset($dates[$i + 1])) {
+                continue;
+            }
+
+            $start = $dates[$i];
+            $end   = $dates[$i + 1];
+
+            while ($start->lte($end)) {
+                CalendarDay::updateOrCreate(
+                    [
+                        'property_id' => $property->id,
+                        'date'        => $start->toDateString(),
+                    ],
+                    [
+                        'status' => 'booked',
+                        'source' => 'ics',
+                    ]
+                );
+
+                $start->addDay();
+                $imported++;
+            }
+        }
+
+        return $imported;
+    }
+
+    /**
+     * Estrae la data da una riga DTSTART / DTEND
+     */
+    private function parseDate(string $line): Carbon
+    {
+        preg_match('/:(\d{8})/', $line, $matches);
+
+        return Carbon::createFromFormat('Ymd', $matches[1]);
     }
 }

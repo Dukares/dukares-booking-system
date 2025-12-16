@@ -2,86 +2,33 @@
 
 @section('content')
 
-<div class="container mx-auto py-6">
+<h1 class="text-3xl font-bold mb-6">➕ Nuova Struttura</h1>
 
-    <h1 class="text-3xl font-bold mb-6">➕ Aggiungi Struttura</h1>
+<form method="POST" action="{{ route('properties.store') }}"
+      class="bg-white p-6 rounded shadow max-w-xl">
+    @csrf
 
-    {{-- Se non esistono proprietari --}}
-    @if($owners->isEmpty())
-        <div class="p-4 bg-yellow-200 border-l-4 border-yellow-600 mb-6">
-            ⚠️ Prima devi creare almeno un <strong>proprietario</strong>.
-        </div>
+    <div class="mb-4">
+        <label class="block font-semibold mb-1">Nome *</label>
+        <input type="text" name="name" required
+               class="w-full border rounded p-2">
+    </div>
 
-        <a href="{{ route('owners.create') }}" 
-            class="px-4 py-2 bg-blue-600 text-white rounded">
-            ➕ Crea Proprietario
-        </a>
+    <div class="mb-4">
+        <label class="block font-semibold mb-1">Città</label>
+        <input type="text" name="city"
+               class="w-full border rounded p-2">
+    </div>
 
-        @return
-    @endif
+    <button type="submit"
+            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+        Salva Struttura
+    </button>
 
-    <form method="POST" action="{{ route('properties.store') }}" 
-          class="bg-white p-6 rounded shadow w-full max-w-xl">
-        @csrf
-
-        {{-- PROPRIETARIO --}}
-        <div class="mb-4">
-            <label class="block font-semibold mb-1">Proprietario *</label>
-            <select name="owner_id" class="w-full border rounded p-2" required>
-                <option value="">Seleziona proprietario</option>
-
-                @foreach($owners as $owner)
-                    <option value="{{ $owner->id }}">
-                        {{ $owner->nome }} {{ $owner->cognome }}
-                    </option>
-                @endforeach
-
-            </select>
-        </div>
-
-        {{-- NOME STRUTTURA --}}
-        <div class="mb-4">
-            <label class="block font-semibold mb-1">Nome struttura *</label>
-            <input type="text" name="name" 
-                   class="w-full border rounded p-2" required>
-        </div>
-
-        {{-- INDIRIZZO --}}
-        <div class="mb-4">
-            <label class="block font-semibold mb-1">Indirizzo *</label>
-            <input type="text" name="address" 
-                   class="w-full border rounded p-2" required>
-        </div>
-
-        {{-- DESCRIZIONE --}}
-        <div class="mb-4">
-            <label class="block font-semibold mb-1">Descrizione</label>
-            <textarea name="description" rows="4" 
-                      class="w-full border rounded p-2"></textarea>
-        </div>
-
-        {{-- ⭐ ICS URL (Airbnb / Booking.com) --}}
-        <div class="mb-6">
-            <label class="block font-semibold mb-1">ICS URL (Airbnb / Booking.com)</label>
-            <input type="text" name="ics_url" value="{{ old('ics_url') }}"
-                   class="w-full border rounded p-2"
-                   placeholder="https://www.airbnb.com/calendar/ical/123456789.ics">
-        </div>
-
-        {{-- BOTTONI --}}
-        <div class="flex justify-between items-center mt-6">
-            <a href="{{ route('properties.index') }}" 
-               class="text-blue-600 hover:underline">
-                ‹ Torna alla lista
-            </a>
-
-            <button type="submit" 
-                class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-                💾 Salva Struttura
-            </button>
-        </div>
-    </form>
-
-</div>
+    <a href="{{ route('properties.index') }}"
+       class="ml-4 text-gray-600 hover:underline">
+        Annulla
+    </a>
+</form>
 
 @endsection

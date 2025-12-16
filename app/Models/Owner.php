@@ -9,15 +9,14 @@ class Owner extends Model
 {
     use HasFactory;
 
-    protected $table = 'owners';
-
     protected $fillable = [
-        'nome',
-        'cognome',
+        'name',
         'email',
-        'telefono',
-        'indirizzo',
-        'created_at',
-        'updated_at'
+        'phone',
     ];
+
+    public function properties()
+    {
+        return $this->hasMany(Property::class);
+    }
 }

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Owner;
+use Illuminate\Http\Request;
 
 class OwnerController extends Controller
 {
@@ -20,26 +20,20 @@ class OwnerController extends Controller
 
     public function store(Request $request)
     {
-        Owner::create($request->all());
-        return redirect()->route('owners.index')->with('success', 'Proprietario creato.');
-    }
+        $request->validate([
+            'name'  => 'required|string|max:255',
+            'email' => 'nullable|email',
+            'phone' => 'nullable|string|max:30',
+        ]);
 
-    public function edit($id)
-    {
-        $owner = Owner::findOrFail($id);
-        return view('owners.edit', compact('owner'));
-    }
+        Owner::create([
+            'name'  => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+        ]);
 
-    public function update(Request $request, $id)
-    {
-        $owner = Owner::findOrFail($id);
-        $owner->update($request->all());
-        return redirect()->route('owners.index')->with('success', 'Aggiornato.');
-    }
-
-    public function destroy($id)
-    {
-        Owner::destroy($id);
-        return redirect()->route('owners.index')->with('success', 'Eliminato.');
+        return redirect()
+            ->route('owners.index')
+            ->with('success', 'Proprietario creato con successo');
     }
 }

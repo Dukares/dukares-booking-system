@@ -9,14 +9,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('properties', function (Blueprint $table) {
-            $table->string('ics_url')->nullable()->after('property_type');
+            if (! Schema::hasColumn('properties', 'active')) {
+                $table->boolean('active')->default(true)->after('ics_url');
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('properties', function (Blueprint $table) {
-            $table->dropColumn('ics_url');
+            if (Schema::hasColumn('properties', 'active')) {
+                $table->dropColumn('active');
+            }
         });
     }
 };

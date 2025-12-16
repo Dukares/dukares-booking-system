@@ -11,20 +11,18 @@ return new class extends Migration
         Schema::create('properties', function (Blueprint $table) {
             $table->id();
 
-            // Owner facoltativo (può essere null)
+            // Relazione con owners
             $table->foreignId('owner_id')
-                ->nullable()
-                ->constrained()
-                ->nullOnDelete();
+                  ->constrained()
+                  ->cascadeOnDelete();
 
-            $table->string('name');
+            $table->string('title');
             $table->text('description')->nullable();
-            $table->string('address')->nullable();
             $table->string('city')->nullable();
-            $table->string('country')->nullable();
+            $table->decimal('price_per_night', 10, 2)->default(0);
 
-            $table->integer('stars')->default(0)->nullable();  
-            $table->string('property_type')->nullable(); 
+            // ICS calendar (Airbnb, Booking, ecc.)
+            $table->string('ics_url')->nullable();
 
             $table->timestamps();
         });

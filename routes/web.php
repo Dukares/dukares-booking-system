@@ -12,9 +12,9 @@ use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\HostChannelController;
 
 /*
-|---------------------------------------------------------------------------
+|--------------------------------------------------------------------------
 | ROTTE PUBBLICHE
-|---------------------------------------------------------------------------
+|--------------------------------------------------------------------------
 */
 Route::get('/', fn () => redirect('/login'));
 
@@ -31,34 +31,62 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
     ->name('logout');
 
 /*
-|---------------------------------------------------------------------------
+|--------------------------------------------------------------------------
 | ROTTE AUTENTICATE (STABILI)
-|---------------------------------------------------------------------------
+|--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
 
-    // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    /*
+    |----------------------------------------------------------------------
+    | Dashboard & Security
+    |----------------------------------------------------------------------
+    */
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
 
-    // Security Center
-    Route::get('/security', [SecurityController::class, 'index'])->name('security');
+    Route::get('/security', [SecurityController::class, 'index'])
+        ->name('security');
 
-    // STRUTTURE (Properties) - CRUD base
-    Route::get('/properties', [PropertyController::class, 'index'])->name('properties.index');
-    Route::get('/properties/create', [PropertyController::class, 'create'])->name('properties.create');
-    Route::post('/properties', [PropertyController::class, 'store'])->name('properties.store');
+    /*
+    |----------------------------------------------------------------------
+    | PROPERTIES (CRUD COMPLETO)
+    |----------------------------------------------------------------------
+    */
+    Route::resource('properties', PropertyController::class);
 
-    // PROPRIETARI (Owners) - CRUD base
-    Route::get('/owners', [OwnerController::class, 'index'])->name('owners.index');
-    Route::get('/owners/create', [OwnerController::class, 'create'])->name('owners.create');
-    Route::post('/owners', [OwnerController::class, 'store'])->name('owners.store');
+    /*
+    |----------------------------------------------------------------------
+    | OWNERS (CRUD BASE – per ora)
+    |----------------------------------------------------------------------
+    */
+    Route::get('/owners', [OwnerController::class, 'index'])
+        ->name('owners.index');
 
-    // PRENOTAZIONI (placeholder per ora, poi lo faremo CRUD)
-    Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.index');
+    Route::get('/owners/create', [OwnerController::class, 'create'])
+        ->name('owners.create');
 
-    // CANALI (Admin) - placeholder/indice
-    Route::get('/channels', [ChannelController::class, 'index'])->name('channels.index');
+    Route::post('/owners', [OwnerController::class, 'store'])
+        ->name('owners.store');
 
-    // HOST CHANNEL MANAGER
-    Route::get('/host/channels', [HostChannelController::class, 'index'])->name('host.channels.index');
+    /*
+    |----------------------------------------------------------------------
+    | RESERVATIONS (placeholder)
+    |----------------------------------------------------------------------
+    */
+    Route::get('/reservations', [ReservationController::class, 'index'])
+        ->name('reservations.index');
+
+    /*
+    |----------------------------------------------------------------------
+    | CHANNELS
+    |----------------------------------------------------------------------
+    */
+    Route::get('/channels', [ChannelController::class, 'index'])
+        ->name('channels.index');
+
+    Route::get('/host/channels', [HostChannelController::class, 'index'])
+        ->name('host.channels.index');
 });
+
+

@@ -14,10 +14,22 @@ class HostChannelController extends Controller
     {
         $user = Auth::user();
 
-        // ⚠️ DA MODIFICARE QUANDO AGGIUNGI OWNER → USER
-        $properties = Property::with('channelConnections.channel')->get();
+        /*
+         |--------------------------------------------------------------------------
+         | TEMPORANEO
+         |--------------------------------------------------------------------------
+         | Finché non implementiamo:
+         | - relazione Property → ChannelConnection
+         | - relazione ChannelConnection → Channel
+         |
+         | NON usiamo: with('channelConnections.channel')
+         | altrimenti Laravel va in errore.
+         */
+        $properties = Property::all();
 
-        $channels = Channel::where('is_active', true)->orderBy('name')->get();
+        $channels = Channel::where('is_active', true)
+            ->orderBy('name')
+            ->get();
 
         return view('host.channels.index', compact('properties', 'channels'));
     }

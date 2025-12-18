@@ -3,109 +3,135 @@
 namespace App\Http\Controllers;
 
 use App\Models\Property;
-use App\Models\Room;
-use App\Models\RoomPricing;
+use App\Models\Reservation;
+use App\Services\AvailabilityService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class CalendarController extends Controller
 {
     /**
-     * MOSTRA IL CALENDARIO STILE BOOKING
+     * Monthly calendar view
      */
-    public function index(Property $property, Request $request)
+    public function index(Request $request)
     {
-        $month = $request->month ?? now()->format('Y-m');
-        $carbonMonth = Carbon::parse($month);
+        $properties = Property::orderBy('title')->get();
 
-        $daysInMonth = $carbonMonth->daysInMonth;
-
-        // Carica tutte le camere della struttura
-        $rooms = $property->rooms()->get();
-
-        // Carica prezzi per tutto il mese
-        $pricing = RoomPricing::whereIn('room_id', $rooms->pluck('id'))
-            ->whereBetween('data', [
-                $carbonMonth->startOfMonth()->format('Y-m-d'),
-                $carbonMonth->endOfMonth()->format('Y-m-d')
-            ])
-            ->get()
-            ->groupBy('room_id');
-
-        return view('calendar.index', [
-            'property'     => $property,
-            'rooms'        => $rooms,
-            'pricing'      => $pricing,
-            'month'        => $month,
-            'daysInMonth'  => $daysInMonth
-        ]);
-    }
-
-
-
-    /**
-     * SALVA LE MODIFICHE DI UN GIORNO SINGOLO
-     */
-    public function updateSingle(Request $request)
-    {
-        $request->validate([
-            'room_id' => 'required|exists:rooms,id',
-            'date'    => 'required|date',
-        ]);
-
-        RoomPricing::updateOrCreate(
-            [
-                'room_id' => $request->room_id,
-                'data'    => $request->date
-            ],
-            [
-                'prezzo'           => $request->prezzo,
-                'prezzo_adulto'    => $request->prezzo_adulto,
-                'prezzo_bambino'   => $request->prezzo_bambino,
-                'minimo_soggiorno' => $request->minimo_soggiorno,
-                'disponibilita'    => $request->disponibilita,
-                'extra_ospite'     => $request->extra_ospite,
-                'max_ospiti'       => $request->max_ospiti,
-            ]
-        );
-
-        return back()->with('success', 'Giorno aggiornato correttamente!');
-    }
-
-
-
-    /**
-     * SALVA RANGE DI DATE (MODIFICHE MASSIVE)
-     */
-    public function updateRange(Request $request)
-    {
-        $request->validate([
-            'room_id' => 'required|exists:rooms,id',
-            'from'    => 'required|date',
-            'to'      => 'required|date',
-        ]);
-
-        $period = Carbon::parse($request->from)
-                    ->daysUntil(Carbon::parse($request->to)->addDay());
-
-        foreach ($period as $date) {
-            RoomPricing::updateOrCreate(
-                [
-                    'room_id' => $request->room_id,
-                    'data'    => $date->format('Y-m-d')
-                ],
-                [
-                    'prezzo'           => $request->prezzo,
-                    'prezzo_adulto'    => $request->prezzo_adulto,
-                    'prezzo_bambino'   => $request->prezzo_bambino,
-                    'minimo_soggiorno' => $request->minimo_soggiorno,
-                    'disponibilita'    => $request->disponibilita,
-                    'extra_ospite'     => $request->extra_ospite,
-                    'max_ospiti'       => $request->max_ospiti,
-                ]
-            );
+        if ($properties->isEmpty()) {
+            return view('calendar.empty');
         }
 
-        return back()->with('success', 'Modifiche applicate a tutte le date selezionate!');
+        $propertyId = $request->get('property_id') ?? $properties->first()->id;
+        $property   = Property::findOrFail($propertyId);
+
+        $month = $request->get('month')
+            ? Carbon::parse($request->get('month'))->startOfMonth()
+            : now()->startOfMonth();
+
+        $start = $month->copy()->startOfMonth();
+        $end   = $month->copy()->endOfMonth();
+
+        $reservations = Reservation::where('property_id', $propertyId)
+            ->whereDate('checkin', '<=', $end)
+            ->whereDate('checkout', '>=', $start)
+            ->orderBy('checkin')
+            ->get();
+
+        return view('calendar.index', compact(
+            'property',
+            'properties',
+            'month',
+            'reservations'
+        ));
+    }
+
+    /**
+     * Single day view (click on a calendar day)
+     */
+    public function day(Request $request)
+    {
+        $properties = Property::orderBy('title')->get();
+
+        if ($properties->isEmpty()) {
+            return view('calendar.empty');
+        }
+
+        $propertyId = $request->get('property_id') ?? $properties->first()->id;
+        $property   = Property::findOrFail($propertyId);
+
+        $date = $request->get('date')
+            ? Carbon::parse($request->get('date'))->startOfDay()
+            : now()->startOfDay();
+
+        // Reservations covering this day (checkin <= date < checkout)
+        $dayBookings = Reservation::where('property_id', $propertyId)
+            ->whereDate('checkin', '<=', $date)
+            ->whereDate('checkout', '>', $date)
+            ->orderBy('checkin')
+            ->get();
+
+        $month = $request->get('month')
+            ? Carbon::parse($request->get('month'))->startOfMonth()
+            : $date->copy()->startOfMonth();
+
+        return view('calendar.day', compact(
+            'property',
+            'properties',
+            'propertyId',
+            'date',
+            'dayBookings',
+            'month'
+        ));
+    }
+
+    /**
+     * Create reservation from calendar
+     * STEP 5 – Availability Engine (NO OVERBOOKING)
+     */
+    public function store(Request $request, AvailabilityService $availability)
+    {
+        $data = $request->validate([
+            'property_id' => 'required|exists:properties,id',
+            'guest_name'  => 'required|string|max:255',
+            'checkin'     => 'required|date',
+            'checkout'    => 'required|date|after:checkin',
+            'total_price' => 'nullable|numeric|min:0',
+            'status'      => 'required|string|max:50',
+            'notes'       => 'nullable|string',
+        ]);
+
+        $checkin  = Carbon::parse($data['checkin'])->startOfDay();
+        $checkout = Carbon::parse($data['checkout'])->startOfDay();
+
+        // 🔒 CENTRAL AVAILABILITY CHECK (CORE ENGINE)
+        if (!$availability->isAvailable(
+            $data['property_id'],
+            $checkin,
+            $checkout
+        )) {
+            return back()
+                ->withErrors([
+                    'checkin' => 'Selected dates are not available for this property.',
+                ])
+                ->withInput();
+        }
+
+        Reservation::create([
+            'property_id' => $data['property_id'],
+            'guest_name'  => $data['guest_name'],
+            'checkin'     => $checkin,
+            'checkout'    => $checkout,
+            'total_price' => $data['total_price'] ?? 0,
+            'status'      => $data['status'],
+            'notes'       => $data['notes'] ?? null,
+        ]);
+
+        // Always redirect back to monthly calendar
+        return redirect()
+            ->route('calendar.index', [
+                'property_id' => $data['property_id'],
+                'month'       => $checkin->format('Y-m'),
+            ])
+            ->with('success', 'Reservation created successfully.');
     }
 }

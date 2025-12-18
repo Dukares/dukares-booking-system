@@ -9,11 +9,20 @@ class Property extends Model
 {
     use HasFactory;
 
+    protected $table = 'properties';
+
     protected $fillable = [
-        'name',
-        'city',
-        'active',
         'owner_id',
+        'title',
+        'description',
+        'city',
+        'price_per_night',
+        'active',
+        'ics_url',
+    ];
+
+    protected $casts = [
+        'active' => 'boolean',
     ];
 
     public function owner()

@@ -10,10 +10,11 @@ use App\Http\Controllers\OwnerController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\HostChannelController;
+use App\Http\Controllers\CalendarController;
 
 /*
 |--------------------------------------------------------------------------
-| ROTTE PUBBLICHE
+| PUBLIC ROUTES
 |--------------------------------------------------------------------------
 */
 Route::get('/', fn () => redirect('/login'));
@@ -32,15 +33,15 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
 
 /*
 |--------------------------------------------------------------------------
-| ROTTE AUTENTICATE (STABILI)
+| AUTHENTICATED ROUTES
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
 
     /*
-    |----------------------------------------------------------------------
+    |--------------------------------------------------------------------------
     | Dashboard & Security
-    |----------------------------------------------------------------------
+    |--------------------------------------------------------------------------
     */
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
@@ -49,38 +50,40 @@ Route::middleware('auth')->group(function () {
         ->name('security');
 
     /*
-    |----------------------------------------------------------------------
-    | PROPERTIES (CRUD COMPLETO)
-    |----------------------------------------------------------------------
+    |--------------------------------------------------------------------------
+    | CRUD
+    |--------------------------------------------------------------------------
     */
     Route::resource('properties', PropertyController::class);
+    Route::resource('owners', OwnerController::class);
+    Route::resource('reservations', ReservationController::class);
 
     /*
-    |----------------------------------------------------------------------
-    | OWNERS (CRUD BASE – per ora)
-    |----------------------------------------------------------------------
+    |--------------------------------------------------------------------------
+    | CALENDAR – MONTH / DAY / STORE (STEP 1–2–3)
+    |--------------------------------------------------------------------------
     */
-    Route::get('/owners', [OwnerController::class, 'index'])
-        ->name('owners.index');
+    Route::get('/calendar', [CalendarController::class, 'index'])
+        ->name('calendar.index');
 
-    Route::get('/owners/create', [OwnerController::class, 'create'])
-        ->name('owners.create');
+    Route::get('/calendar/day', [CalendarController::class, 'day'])
+        ->name('calendar.day');
 
-    Route::post('/owners', [OwnerController::class, 'store'])
-        ->name('owners.store');
+    Route::post('/calendar/store', [CalendarController::class, 'store'])
+        ->name('calendar.store');
 
     /*
-    |----------------------------------------------------------------------
-    | RESERVATIONS (placeholder)
-    |----------------------------------------------------------------------
+    |--------------------------------------------------------------------------
+    | CALENDAR – WEEKLY / TIMELINE (STEP 4)
+    |--------------------------------------------------------------------------
     */
-    Route::get('/reservations', [ReservationController::class, 'index'])
-        ->name('reservations.index');
+    Route::get('/calendar/week', [CalendarController::class, 'week'])
+        ->name('calendar.week');
 
     /*
-    |----------------------------------------------------------------------
+    |--------------------------------------------------------------------------
     | CHANNELS
-    |----------------------------------------------------------------------
+    |--------------------------------------------------------------------------
     */
     Route::get('/channels', [ChannelController::class, 'index'])
         ->name('channels.index');
@@ -88,5 +91,3 @@ Route::middleware('auth')->group(function () {
     Route::get('/host/channels', [HostChannelController::class, 'index'])
         ->name('host.channels.index');
 });
-
-

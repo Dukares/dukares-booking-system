@@ -1,0 +1,53 @@
+/* ===============================
+   DukaRes Calendar – UI FIX
+   =============================== */
+
+/* Select (struttura + mese) */
+.calendar-select {
+    background-color: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    color: #111827 !important;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+/* Giorni calendario */
+.calendar-day {
+    background-color: #dcfce7; /* verde chiaro */
+    border: 1px solid #86efac;
+    border-radius: 10px;
+    padding: 12px;
+    min-height: 90px;
+    color: #065f46;
+    font-weight: 500;
+}
+
+/* Giorno occupato */
+.calendar-day.busy {
+    background-color: #fee2e2;
+    border-color: #fca5a5;
+    color: #7f1d1d;
+}
+
+/* Numero giorno */
+.calendar-day-number {
+    font-size: 14px;
+    font-weight: 700;
+    color: #064e3b;
+}
+
+/* Stato */
+.calendar-status {
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+/* Header calendario */
+.calendar-header {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
